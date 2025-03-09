@@ -1,0 +1,49 @@
+name: Secure CI/CD Pipeline
+
+on: [push, pull_request]
+
+jobs:
+  security_pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Static Code Analysis (SAST) with SonarQube
+        run: |
+          sonar-scanner \
+          -Dsonar.projectKey=juice-shop \
+          -Dsonar.sources=. \
+          -Dsonar.host.url=http://sonarqube:9000
+
+      - name: Run Software Composition Analysis (SCA) with Snyk
+        run: |
+          npm install -g snyk
+          snyk test
+
+      - name: Run Dynamic Analysis (DAST) with OWASP ZAP
+        run: |
+          docker run -v $(pwd):/zap/wrk -t owasp/zap2docker-stable zap-baseline.py -t http://localhost:3000
+
+      - name: Run Secret Scanning with TruffleHog
+        run: |
+          pip install trufflehog
+          trufflehog --regex --entropy=True .
+
+      - name: Scan Docker Image with Trivy
+        run: |
+          docker build -t juice-shop .
+          trivy image juice-shop
+
+      - name: Deploy Secure Application
+        run: |
+          docker-compose up -d
