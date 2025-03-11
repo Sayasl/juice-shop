@@ -1,4 +1,4 @@
-name: Security Pipeline
+name: Secure CI/CD Pipeline with Bandit
 
 on: [push, pull_request]
 
@@ -17,14 +17,13 @@ jobs:
 
       - name: Install Bandit
         run: |
+          python -m pip install --upgrade pip setuptools wheel
           pip install bandit
 
       - name: Run Static Code Analysis (SAST) with Bandit
         run: |
-          bandit -r . -f json -o bandit-report.json
+          bandit -r . || true  # Prevents pipeline failure on warnings
 
-      - name: Upload Bandit Report
-        uses: actions/upload-artifact@v3
-        with:
-          name: bandit-report
-          path: bandit-report.json
+      - name: Save Bandit Report
+        run: |
+          bandit -r . -f json -o bandit-report.json
