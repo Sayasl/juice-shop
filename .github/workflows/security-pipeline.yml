@@ -18,17 +18,13 @@ jobs:
       - name: Install Bandit
         run: |
           pip install bandit
-          
+
       - name: Run Static Code Analysis (SAST) with Bandit
         run: |
           bandit -r . -f json -o bandit-report.json
 
-  security_check:  # Ensure proper indentation
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3  # Use the same version for consistency
-
-      - name: Run Security Scan
-        run: echo "Running Security Scan..."
+      - name: Upload Bandit Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: bandit-report
+          path: bandit-report.json
